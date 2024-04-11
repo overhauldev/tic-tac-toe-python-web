@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TIC TAC TOE</title>
+    <link rel="stylesheet" type="text/css" href="../static/styles/main.css">
+</head>
+<body style="background-color: darkgrey;">
+    <h1 align="center">TIC TAC TOE</h1>
+
+    <div id="intro-screen" class="center">
+        <h2>Choose your symbol:</h2>
+        <button type="button" id="choose-x" class="choose">X</button>
+        <button type="button" id="choose-o" class="choose">O</button>
+    </div>
+  
+    <div id="enemy-screen" class="center hidden">
+        <h2>Play against:</h2>
+        <button type="button" id="choose-human" class="choose">Human</button>
+        <button type="button" id="choose-cpu" class="choose">CPU</button>
+    </div>
+    
+    <div id="game-screen" class="center hidden">
+        <!-- Every cell has an id "cell" followed by cell row and cell column -->
+        <table class="center">
+            <tr>
+                <td><button type="button" class="cell" id="cell00"></button></td>
+                <td><button type="button" class="cell" id="cell01"></button></td>
+                <td><button type="button" class="cell" id="cell02"></button></td>
+            </tr>
+            <tr>
+                <td><button type="button" class="cell" id="cell10"></button></td>
+                <td><button type="button" class="cell" id="cell11"></button></td>
+                <td><button type="button" class="cell" id="cell12"></button></td>
+            </tr>
+            <tr>
+                <td><button type="button" class="cell" id="cell20"></button></td>
+                <td><button type="button" class="cell" id="cell21"></button></td>
+                <td><button type="button" class="cell" id="cell22"></button></td>
+            </tr>
+        </table>
+        <button type="button" id="restart">Restart</button>
+    </div>
+    <script type="text/javascript">
+        var aiEnabled = true;
+        let fetchedData;
+        document.addEventListener("DOMContentLoaded", function() {
+            // Intro screen buttons
+            document.getElementById("choose-x").addEventListener("click", function() {
+                playerSymbol = "X";
+                enemySymbol = "O";
+                setTimeout(fadeIntroScreen, 300);
+                console.log("HI")
+            });
+            document.getElementById("choose-o").addEventListener("click", function() {
+                playerSymbol = "O";
+                enemySymbol = "X";
+                setTimeout(fadeIntroScreen, 300);
+                console.log("HI")
+            });
+            // Enemy screen buttons
+            document.getElementById("choose-human").addEventListener("click", function() {
+                aiEnabled = false;
+                startGame();
+            });
+
+            document.getElementById("choose-cpu").addEventListener("click", function() {
+                aiEnabled = true;
+                startGame();
+            });
+
+            document.querySelectorAll('.cell').forEach(function(cell) {
+                cell.addEventListener('click', function() {
+                    console.log('Cell clicked', cell.id)
+                    insertSymbol(cell,playerSymbol)
+                    sendData(aiEnabled, cell.id, playerSymbol)
+                    get_data()                   
+                  })
+            });
+        });
+        function sendData(aiEnabled, cell, symbol) {
+            console.log(cell)
+            fetch('/process_data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ai:aiEnabled,data:cell,symbol:symbol})
+            })
+            .then(response => response.json())
+        }
+        function get_data() {
+            fetch('/process_data')
+            .then(res => res.json())
+            .then(data => {
+                fetchedData = data;
+                handleData(data);          
+           })
+        
+        }
+        function handleData(data) {
+            console.log('Received data:', data);
+            cell = data['data']
+            symbol = data['symbol']
+            console.log("insert:", cell, symbol)
+            button = document.getElementById(cell)
+            insertSymbol(button,symbol)
+}
+        function insertSymbol(element,symbol) {
+            console.log("Doing:", element, symbol)
+            console.log(element.innerHTML)
+            element.innerHTML = symbol
+        }
+        function fadeIntroScreen() {
+            var introScreen = document.getElementById("intro-screen");
+            var opacity = 1;
+            var interval = setInterval(function() {
+                // Fade out intro screen
+                if (opacity <= 0) {
+                    clearInterval(interval);
+                    introScreen.style.display = "none"; // Hide intro screen
+                    document.getElementById("enemy-screen").classList.remove("hidden"); // Show enemy screen
+                    showEnemyScreen()
+                } else {
+                    introScreen.style.opacity = opacity;
+                    opacity -= 0.1; // Adjust the decrement value to control the speed of the fade-out effect
+                }
+
+                }, 50); // Adjust the interval value to control the frequency of opacity updates        
+            }   
+        function showEnemyScreen() {
+            var enemyScreen = document.getElementById("enemy-screen");
+            enemyScreen.style.opacity = 0; // Set initial opacity to 0
+            enemyScreen.classList.remove("hidden"); // Show enemy screen
+            var opacity = 0;
+            var interval = setInterval(function() {
+                if (opacity >= 1) {
+                    clearInterval(interval);
+                } else {
+                    enemyScreen.style.opacity = opacity;
+                    opacity += 0.1; // Adjust the increment value to control the speed of the fade-in effect
+                }
+            }, 50); // Adjust the interval value to control the frequency of opacity updates
+        }
+
+        function startGame() {
+            document.getElementById("enemy-screen").style.display = "none"
+            document.getElementById("game-screen").classList.remove("hidden");
+        }
+    </script>
+</body>
+<div class = "footer">
+    <p>Author: Archie Townsend</p>
+</div>
+</html>
